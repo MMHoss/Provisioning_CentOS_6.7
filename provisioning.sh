@@ -55,7 +55,7 @@ cd /home/config-files
 git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/config-files
 
 # copiamos o arquivo de configuracao do Nginx para a pasta dos sites ativos
-cp /home/config-files/ejemplo.com.br.conf /etc/nginx/sites-enabled/ejemplo.com.br.conf
+cp /home/config-files/config/ejemplo.com.br.conf /etc/nginx/sites-enabled/ejemplo.com.br.conf
 
 # Modificamos o nginx.conf para incluir a nova configuracao
 sed -i.old 's/conf.d/sites-enabled/' /etc/nginx/nginx.conf
