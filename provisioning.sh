@@ -1,5 +1,5 @@
 #!/bin/bash
-# script a ser ejecutado com usuario com permisos administrativos
+# script a ser ejecutado com usuario com permisos administrativos (permisos de root)
 
 # Instalamos Java Container
 yum -y install java
@@ -16,3 +16,53 @@ yum -y install epel-release
 yum -y install nginx
 service nginx start
 chkconfig --level 234 nginx on
+
+# creamos directorio para certificado do web server
+mkdir -p /etc/nginx/ssl
+cd /etc/nginx/ssl
+
+# generamos uma passphrase para o certificado
+export PASSPHRASE=$(head -c 500 /dev/urandom | tr -dc a-z0-9A-Z | head -c 128; echo)
+# creamos a chave privada
+openssl genrsa -des3 -out ejemplo.key -passout env:PASSPHRASE 2048
+
+# Generamos a informacao do Subject do certificado
+subject="
+C=BR
+ST=MinasGerais
+LocalityName=Uberlandia
+O=Zup
+OU=TI
+CommonName=www.zup.com.br
+EmailAddress=admin@zup.com.br
+"
+
+# generamos o CSR (certificate signing request)
+openssl req -new -batch -subj "$(echo -n "$subject" | tr "\n" "/")" -key zup.key \
+    -out zup.csr -passin env:PASSPHRASE
+
+# Removemos a passphrase da chave
+cp ejemplo.key ejemplo.key.bak
+openssl rsa -in ejemplo.key.bak -out ejemplo.key -passin env:PASSPHRASE	
+	
+# generamos o certificado assinado com a chave creada antes
+openssl x509 -req -in ejemplo.csr -signkey ejemplo.key -out ejemplo.crt
+
+# instalamos Git e descargamos o repositorio dos arquivos de configuracao		
+yum -y install git
+mkdir /home/config-files
+cd /home/config-files
+git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/config-files
+
+# copiamos o arquivo de configuracao do Nginx para a pasta dos sites ativos
+cp /home/config-files/ejemplo.com.br.conf /etc/nginx/sites-enabled/ejemplo.com.br.conf
+
+# Modificamos o nginx.conf para incluir a nova configuracao
+sed -i.old 's/conf.d/sites-enabled/' /etc/nginx/nginx.conf
+# fazemos reload do servicio nginx para aplicar os cambios na configuracao
+nginx -s reload
+
+# modificamos a configuracao do tomcat para recever trafego HTTPS do proxy reverso
+sed -i.old 's/redirectPort="8443"/redirectPort="8443" scheme="https" proxyName="localhost" proxyPort="443"/' /etc/tomcat/server.xml
+# reiniciamos o servicio do tomcat para aplicar os cambios
+service tomcat restart
