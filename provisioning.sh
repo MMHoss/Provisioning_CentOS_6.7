@@ -26,6 +26,21 @@ export PASSPHRASE=$(head -c 500 /dev/urandom | tr -dc a-z0-9A-Z | head -c 128; e
 # creamos a chave privada
 openssl genrsa -des3 -out ejemplo.key -passout env:PASSPHRASE 2048
 
+cat > /etc/yum.repos.d/mongodb-org-3.2.repo <<EOF
+[mongodb-org-3.2]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.2/x86_64/
+gpgcheck=0
+enabled=1
+EOF
+
+yum -y install mongodb mongodb-server
+service mongod start
+chkconfig mongod on
+
+sed -i.old 's/#auth = true/auth = true/' /etc/mongodb.conf
+service mongod restart
+
 # Generamos a informacao do Subject do certificado
 subject="
 C=BR
