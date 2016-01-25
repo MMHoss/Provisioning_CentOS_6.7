@@ -1,9 +1,6 @@
 #!/bin/bash
 # script a ser ejecutado com usuario com permisos administrativos (permisos de root)
 
-# actualizamos o SO
-yum -y upgrade
-
 # Instalamos Java Container
 yum -y install java
 
