@@ -1,6 +1,12 @@
 #!/bin/bash
 # script a ser ejecutado com usuario com permisos administrativos (permisos de root)
 
+# instalamos Git e descargamos o repositorio dos arquivos de configuracao		
+yum -y install git
+mkdir /home/config-files
+cd /home/config-files
+git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/
+
 # Instalamos Java Container
 yum -y install java
 
@@ -26,21 +32,6 @@ export PASSPHRASE=$(head -c 500 /dev/urandom | tr -dc a-z0-9A-Z | head -c 128; e
 # creamos a chave privada
 openssl genrsa -des3 -out ejemplo.key -passout env:PASSPHRASE 2048
 
-cat > /etc/yum.repos.d/mongodb-org-3.2.repo <<EOF
-[mongodb-org-3.2]
-name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.2/x86_64/
-gpgcheck=0
-enabled=1
-EOF
-
-yum -y install mongodb mongodb-server
-service mongod start
-chkconfig mongod on
-
-sed -i.old 's/#auth = true/auth = true/' /etc/mongodb.conf
-service mongod restart
-
 # Generamos a informacao do Subject do certificado
 subject="
 C=BR
@@ -51,7 +42,6 @@ OU=TI
 CommonName=www.zup.com.br
 EmailAddress=admin@zup.com.br
 "
-
 # generamos o CSR (certificate signing request)
 openssl req -new -batch -subj "$(echo -n "$subject" | tr "\n" "/")" -key zup.key \
     -out zup.csr -passin env:PASSPHRASE
@@ -63,12 +53,6 @@ openssl rsa -in ejemplo.key.bak -out ejemplo.key -passin env:PASSPHRASE
 # generamos o certificado assinado com a chave creada antes
 openssl x509 -req -in ejemplo.csr -signkey ejemplo.key -out ejemplo.crt
 
-# instalamos Git e descargamos o repositorio dos arquivos de configuracao		
-yum -y install git
-mkdir /home/config-files
-cd /home/config-files
-git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/config-files
-
 # copiamos o arquivo de configuracao do Nginx para a pasta dos sites ativos
 cp /home/config-files/config/ejemplo.com.br.conf /etc/nginx/sites-enabled/ejemplo.com.br.conf
 
@@ -79,9 +63,11 @@ nginx -s reload
 
 # modificamos a configuracao do tomcat para recever trafego HTTPS do proxy reverso
 sed -i.old 's/redirectPort="8443"/redirectPort="8443" scheme="https" proxyName="localhost" proxyPort="443"/' /etc/tomcat/server.xml
+
 # reiniciamos o servicio do tomcat para aplicar os cambios
 service tomcat restart
 
+# Sumamos o repositorio da ultima verçao do MongoDB
 cat > /etc/yum.repos.d/mongodb-org-3.2.repo <<EOF
 [mongodb-org-3.2]
 name=MongoDB Repository
@@ -90,14 +76,20 @@ gpgcheck=0
 enabled=1
 EOF
 
+# Instalamos a ultima versao estable do MongoDB (outra opcao era instalar a versão do repositorio base, bastante mais antigua)
 yum -y install mongodb-org-server-3.2.1 mongodb-org-shell mongodb-org-tools --disablerepo=base,epel,updates,extra 
 
+# Habilitamos autenticacao modificando o mongodb.conf
 sed -i.old 's/'#security:'/'security:'\n'"  authorization: enabled"'/' /etc/mongodb.conf
 
+# comenzamos o servicio do MongoDB com as configuraçoes do arquivo .conf
 mongod --fork -f /etc/mongodb.conf
 
+# configuramos o servicio para iniciar automaticamente
 chkconfig mongod on
 
+# aplicamos js script para creaçao dos usuarios nas bases de datos (no MongoDB as bases nao precisam 
+# ser creadas, elas comienzam a existir cuando alguma informacao e inserta nelas)
 mongo < /home/config-files/mongo_user_creation.js
 
 # flush of existing rules
