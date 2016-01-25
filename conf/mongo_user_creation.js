@@ -1,5 +1,5 @@
 db = connect('127.0.0.1/admin');
-db.addUser(
+db.createUser(
   {
     user: "Admin",
     pwd: "Admin*Pass",
@@ -8,7 +8,7 @@ db.addUser(
 )
 
 db = connect('127.0.0.1/ZupDB');
-db.addUser( 
+db.createUser( 
 	{ 
 	user: "zup_user",
 	pwd: "Zu_p455w0rd",
