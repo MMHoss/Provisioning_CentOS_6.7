@@ -56,7 +56,7 @@ openssl rsa -in ejemplo.key.bak -out ejemplo.key -passin env:PASSPHRASE
 openssl x509 -req -in ejemplo.csr -signkey ejemplo.key -out ejemplo.crt
 
 # copiamos o arquivo de configuracao do Nginx para a pasta dos sites ativos
-cp /home/config-files/config/ejemplo.com.br.conf /etc/nginx/sites-enabled/ejemplo.com.br.conf
+cp /home/prov/conf/ejemplo.com.br.conf /etc/nginx/sites-enabled/ejemplo.com.br.conf
 
 # Modificamos o nginx.conf para incluir a nova configuracao
 sed -i.old 's/conf.d/sites-enabled/' /etc/nginx/nginx.conf
@@ -92,7 +92,7 @@ chkconfig mongod on
 
 # aplicamos js script para creaçao dos usuarios nas bases de datos (no MongoDB as bases nao precisam 
 # ser creadas, elas comienzam a existir cuando alguma informacao e inserta nelas)
-mongo < /home/config-files/mongo_user_creation.js
+mongo < /home/prov/conf/mongo_user_creation.js
 
 # flush of existing rules
 iptables -F
