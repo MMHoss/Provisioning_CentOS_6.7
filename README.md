@@ -3,8 +3,10 @@
 
 To run it, download the tar file or with git already installed run:
   
-  git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/prov
+  git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/prov 
+  
   cd /home/prov
+  
   chmod +x provisioning.sh
 
 and then run 
