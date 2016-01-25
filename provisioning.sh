@@ -3,9 +3,9 @@
 
 # instalamos Git e descargamos o repositorio dos arquivos de configuracao		
 yum -y install git
-mkdir /home/config-files
-cd /home/config-files
-git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/
+git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/prov
+
+yum -y upgrade && yum -y update
 
 # Instalamos Java Container
 yum -y install java
