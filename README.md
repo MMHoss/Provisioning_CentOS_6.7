@@ -7,4 +7,8 @@ To run it, download the tar file or with git already installed run:
   cd /home/prov
   chmod +x provisioning.sh
 
-and then run ./provisioning.sh with administrative rights (as root or with sudo for example).
+and then run 
+
+./provisioning.sh 
+
+with administrative rights (as root or with sudo for example).
