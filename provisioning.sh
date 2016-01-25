@@ -81,3 +81,43 @@ nginx -s reload
 sed -i.old 's/redirectPort="8443"/redirectPort="8443" scheme="https" proxyName="localhost" proxyPort="443"/' /etc/tomcat/server.xml
 # reiniciamos o servicio do tomcat para aplicar os cambios
 service tomcat restart
+
+cat > /etc/yum.repos.d/mongodb-org-3.2.repo <<EOF
+[mongodb-org-3.2]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/6Server/mongodb-org/3.2/x86_64/
+gpgcheck=0
+enabled=1
+EOF
+
+yum -y install mongodb-org-server-3.2.1 mongodb-org-shell mongodb-org-tools --disablerepo=base,epel,updates,extra 
+
+sed -i.old 's/'#security:'/'security:'\n'"  authorization: enabled"'/' /etc/mongodb.conf
+
+mongod --fork -f /etc/mongodb.conf
+
+chkconfig mongod on
+
+mongo < /home/config-files/mongo_user_creation.js
+
+# flush of existing rules
+iptables -F
+# block of NULL packets
+iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+# block syn-flood attacks
+iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+# block Christmas tree packets attacks
+iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+iptables -A INPUT -p tcp --dport 22,80,443 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 22,80,443 -m state --state ESTABLISHED -j ACCEPT
+
+
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+
+reboot now
