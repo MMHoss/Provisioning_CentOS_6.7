@@ -4,6 +4,8 @@
 # instalamos Git e descargamos o repositorio dos arquivos de configuracao		
 yum -y install git
 git clone https://github.com/MMHoss/Provisioning_CentOS_6.7.git /home/prov
+cd /home/prov
+chmod +x provisioning.sh
 
 yum -y upgrade && yum -y update
 
